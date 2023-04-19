@@ -1,130 +1,47 @@
-import sys
-import logging
+"""課題１実行用ファイル"""
+
 from sklearn import datasets
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
-from sklearn.linear_model import LogisticRegression, SGDClassifier
-from sklearn.svm import SVC, LinearSVC
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.naive_bayes import GaussianNB
-from sklearn.ensemble import GradientBoostingClassifier
+from setting import CV_TYPE, SELECT_MODEL_ALL, SELECT_MODEL_ARR, SELECT_NAME
 
-# util
-from cross_validation import cross_validation
+from load_model import load_machine_learning_model
+from cross_validation import cross_validation_select
+from utils import log_setting
 
-arr = sys.argv[1:]
+logger = log_setting(__name__)
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-formatter = logging.Formatter('%(asctime)s - %(levelname)s:%(name)s - %(message)s')
-file_handler = logging.FileHandler('test.log')
-file_handler.setFormatter(formatter)
-logger.addHandler(file_handler)
+def model_select(select_model_arr, modelname):
+    """モデルの選択判定処理"""
+    return modelname in select_model_arr or 'all' in select_model_arr
 
-def task1(select_model_arr):
+def task1(select_model_arr, cv_type, select_name):
     """メイン処理"""
-    # load dataset
-    logging.info('start load dataset')
-    print('start load dataset')
+    # データセットの読込
+    logger.info('データセットの読込開始')
+    print('データセットの読込開始')
     dataset = datasets.fetch_covtype(data_home="./data")
-    # x_train, x_test, t_train, t_test = train_test_split(dataset.data, dataset.target, test_size=0.3, random_state=0)
 
-    logging.info('start cross validation')
-    print('start cross validation')
+    # モデル選択でallが選択された場合の処理
+    if 'all' in select_model_arr:
+        select_model_arr = SELECT_MODEL_ALL
 
-    if select_model_arr in 'logreg':
-        # ロジスティック回帰
-        logreg = LogisticRegression()
-        cross_validation('logreg', logreg, dataset)
+    # 機械学習の実施
+    for select_model_name in select_model_arr:
+        # 機械学習モデルの読込
+        logger.info('モデル読込開始')
+        print('モデル読込開始')
+        model = load_machine_learning_model(select_model_name)
 
-    if select_model_arr in 'svc':
-        # SVM
-        svc = SVC()
-        cross_validation('svc', svc, dataset)
+        if model != '':
+            # 交差検証の実施
+            logger.info('交差検証開始')
+            print('交差検証開始')
+            cross_validation_select(select_model_name, model, dataset, cv_type, select_name)
+        else:
+            logger.error('正しくないモデル名が設定されています')
+            print('正しくないモデル名が設定されています')
 
-    if select_model_arr in 'linear_svc':
-        # LinearSVC
-        linear_svc = LinearSVC()
-        cross_validation('linear_svc', linear_svc, dataset)
-
-    if select_model_arr in 'decisiontree':
-        # 決定木
-        decisiontree = DecisionTreeClassifier()
-        cross_validation('decisiontree', decisiontree, dataset)
-
-    if select_model_arr in 'randomforest':
-        # ランダムフォレスト
-        randomforest = RandomForestClassifier()
-        cross_validation('randomforest', randomforest, dataset)
- 
-    if select_model_arr in 'knn':
-        # K-近傍法
-        knn = KNeighborsClassifier()
-        cross_validation('knn', knn, dataset)
-
-    if select_model_arr in 'gaussian':
-        # ナイーブベイズ
-        gaussian = GaussianNB()
-        cross_validation('gaussian', gaussian, dataset)
-
-    if select_model_arr in 'gbk':       
-        # 勾配ブースティング
-        gbk = GradientBoostingClassifier()
-        cross_validation('gbk', gbk, dataset)
-
-    if select_model_arr in 'logreg':
-        # 確率的勾配降下法
-        sgd = SGDClassifier()
-        cross_validation('sgd', sgd, dataset)
-
-    logging.info('end cross validation')
-    print('end cross validation')
-
-
-
-
-
-
-
-
-
-    # logging.info('end larning')
-    # print('end larning')
-
-    # logging.info('start fitting')
-    # print('start fitting')
-
-    # logging.info('fitting logreg')
-    # print('fitting logreg')
-    # # ロジスティック回帰
-    # logreg.fit(x_train, t_train)
-    # cross_validation('logreg_fit', logreg, dataset)
-    # logreg_pred = logreg.predict(x_test) 
-    # print('logreg_report_fit')
-    # print(classification_report(t_test, logreg_pred))
-
-    # logging.info('fitting decisiontree')
-    # print('fitting decisiontree')
-    # # 決定木
-    # decisiontree.fit(x_train, t_train)
-    # cross_validation('decisiontree_fit', decisiontree, dataset)
-    # decisiontree_pred = decisiontree.predict(x_test)
-    # print('logreg_fit_report')
-    # print(classification_report(t_test, decisiontree_pred))
-
-    # logging.info('fitting randomforest')
-    # print('fitting randomforest')
-    # # ランダムフォレスト
-    # randomforest.fit(x_train, t_train)
-    # cross_validation('randomforest_fit', randomforest, dataset)
-    # randomforest_pred = randomforest.predict(x_test)
-    # print('logreg_fit_report')
-    # print(classification_report(t_test, randomforest_pred))
-
-    # logging.info('end fitting')
-    # print('end fitting')
+    logger.info('完了')
+    print('完了')
     return
 
-task1(arr)
+task1(SELECT_MODEL_ARR, CV_TYPE, SELECT_NAME)
